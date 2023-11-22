@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gitpod_flutter_quickstart/welcome.dart';
-import 'endgame.dart'; // Dodajemy import do pliku endgame.dart
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'endgame.dart';
+import 'dart:async';
 
 void main() {
   runApp(const MyApp());
@@ -21,7 +23,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const WelcomeScreen(),
-        '/game': (context) => const TicTacToeScreen(),
+        '/game': (context) => TicTacToeScreen(),
       },
     );
   }
@@ -31,19 +33,48 @@ class TicTacToeScreen extends StatefulWidget {
   const TicTacToeScreen({Key? key}) : super(key: key);
 
   @override
-  _TicTacToeScreenState createState() => _TicTacToeScreenState();
+  TicTacToeScreenState createState() => TicTacToeScreenState();
 }
 
-class _TicTacToeScreenState extends State<TicTacToeScreen> {
+class TicTacToeScreenState extends State<TicTacToeScreen> {
+  late BannerAd myBanner;
+  bool isBannerLoaded = false;
   late List<List<String>> gameBoard;
   late bool isPlayer1Turn;
   late bool gameEnded;
   late String? winner;
 
+  // Instead of using initState to load the ad, we use FutureBuilder
+  late Future<void> bannerAdFuture;
+
   @override
   void initState() {
     super.initState();
-    startNewGame();
+    bannerAdFuture = initializeBannerAd();
+  }
+
+  Future<void> initializeBannerAd() async {
+    // Initialize myBanner here
+    myBanner = BannerAd(
+      adUnitId: 'YOUR_BANNER_AD_UNIT_ID',
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            isBannerLoaded = true;
+          });
+        },
+      ),
+    );
+
+    await myBanner.load();
+  }
+
+  @override
+  void dispose() {
+    myBanner.dispose();
+    super.dispose();
   }
 
   void startNewGame() {
@@ -66,7 +97,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
   }
 
   void checkForWin() {
-    // Sprawdzanie wierszy i kolumn
+    // Check rows and columns
     for (int i = 0; i < 3; i++) {
       if (gameBoard[i][0] == gameBoard[i][1] &&
           gameBoard[i][1] == gameBoard[i][2] &&
@@ -82,7 +113,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       }
     }
 
-    // Sprawdzanie przekątnych
+    // Check diagonals
     if (gameBoard[0][0] == gameBoard[1][1] &&
         gameBoard[1][1] == gameBoard[2][2] &&
         gameBoard[0][0].isNotEmpty) {
@@ -96,7 +127,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       return;
     }
 
-    // Sprawdzanie remisu
+    // Check for a draw
     bool isDraw = true;
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
@@ -133,8 +164,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         width: 80,
         height: 80,
         decoration: BoxDecoration(
-          color:
-              (row + col) % 2 == 0 ? Colors.white : Colors.grey, // Szachownica
+          color: (row + col) % 2 == 0 ? Colors.white : Colors.grey,
           border: Border.all(color: Colors.black),
         ),
         child: Center(
@@ -168,33 +198,57 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     );
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.grey,
         elevation: 0.0,
         title: const Center(
           child: Text(
-            'KÓŁKO I KRZYŻYK',
-            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            'Kółko i krzyżyk',
+            style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
           ),
         ),
       ),
+      backgroundColor: Colors.grey,
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'Tura gracza: ${isPlayer1Turn ? 'X' : 'O'}',
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                child: buildGameBoard(),
-              ),
-            ),
-          ],
+        child: FutureBuilder<void>(
+          future: bannerAdFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return Column(
+                children: [
+                  Text(
+                    'Tura gracza: ${isPlayer1Turn ? 'X' : 'O'}',
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                      ),
+                      itemBuilder: (BuildContext context, int index) {
+                        int row = index ~/ 3;
+                        int col = index % 3;
+                        return buildSymbol(row, col);
+                      },
+                      itemCount: 9,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (isBannerLoaded)
+                    AdWidget(
+                      ad: myBanner,
+                    ),
+                ],
+              );
+            } else {
+              return const CircularProgressIndicator();
+            }
+          },
         ),
       ),
     );

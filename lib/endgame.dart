@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
-
 class EndGameScreen extends StatelessWidget {
   final String? winner;
 
-  const EndGameScreen({Key? key, required this.winner}) : super(key: key);
+  const EndGameScreen({
+    super.key,
+    required this.winner,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +15,7 @@ class EndGameScreen extends StatelessWidget {
         backgroundColor: Colors.grey,
         elevation: 0.0,
         title: const Center(
-          child: const Text(
+          child: Text(
             'Koniec gry',
             style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
           ),
@@ -25,7 +27,7 @@ class EndGameScreen extends StatelessWidget {
           children: [
             const Text(
               'Koniec gry!',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             if (winner == '')
@@ -42,12 +44,14 @@ class EndGameScreen extends StatelessWidget {
                   ),
                   Text(
                     winner!,
-                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 32, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             const SizedBox(height: 16),
-            ElevatedButton(style: ElevatedButton.styleFrom(primary: Colors.orange),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
               onPressed: () {
                 Navigator.pushReplacementNamed(context, '/game');
               },
