@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'welcome.dart';
+import 'package:gitpod_flutter_quickstart/welcome.dart';
+import 'endgame.dart'; // Dodajemy import do pliku endgame.dart
 
 void main() {
   runApp(const MyApp());
@@ -13,11 +14,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Kółko i krzyżyk',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Colors.grey,
+        primarySwatch: Colors.grey,
       ),
-      initialRoute: '/game', // Zmiana na ekran gry jako ekran startowy
+      initialRoute: '/',
       routes: {
-        '/': (context) =>  WelcomeScreen(),
+        '/': (context) => const WelcomeScreen(),
         '/game': (context) => const TicTacToeScreen(),
       },
     );
@@ -28,10 +30,10 @@ class TicTacToeScreen extends StatefulWidget {
   const TicTacToeScreen({Key? key}) : super(key: key);
 
   @override
-  TicTacToeScreenState createState() => TicTacToeScreenState();
+  _TicTacToeScreenState createState() => _TicTacToeScreenState();
 }
 
-class TicTacToeScreenState extends State<TicTacToeScreen> {
+class _TicTacToeScreenState extends State<TicTacToeScreen> {
   late List<List<String>> gameBoard;
   late bool isPlayer1Turn;
   late bool gameEnded;
@@ -63,8 +65,35 @@ class TicTacToeScreenState extends State<TicTacToeScreen> {
   }
 
   void checkForWin() {
-    // Logika sprawdzania zwycięstwa - ta część jest taka sama jak wcześniej
-    // ...
+    // Sprawdzanie wierszy i kolumn
+    for (int i = 0; i < 3; i++) {
+      if (gameBoard[i][0] == gameBoard[i][1] &&
+          gameBoard[i][1] == gameBoard[i][2] &&
+          gameBoard[i][0].isNotEmpty) {
+        setWinner(gameBoard[i][0]);
+        return;
+      }
+      if (gameBoard[0][i] == gameBoard[1][i] &&
+          gameBoard[1][i] == gameBoard[2][i] &&
+          gameBoard[0][i].isNotEmpty) {
+        setWinner(gameBoard[0][i]);
+        return;
+      }
+    }
+
+    // Sprawdzanie przekątnych
+    if (gameBoard[0][0] == gameBoard[1][1] &&
+        gameBoard[1][1] == gameBoard[2][2] &&
+        gameBoard[0][0].isNotEmpty) {
+      setWinner(gameBoard[0][0]);
+      return;
+    }
+    if (gameBoard[0][2] == gameBoard[1][1] &&
+        gameBoard[1][1] == gameBoard[2][0] &&
+        gameBoard[0][2].isNotEmpty) {
+      setWinner(gameBoard[0][2]);
+      return;
+    }
 
     // Sprawdzanie remisu
     bool isDraw = true;
@@ -86,23 +115,31 @@ class TicTacToeScreenState extends State<TicTacToeScreen> {
     setState(() {
       gameEnded = true;
       winner = symbol;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => EndGameScreen(winner: winner)),
+      );
     });
   }
 
   Widget buildSymbol(int row, int col) {
     String symbol = gameBoard[row][col];
+    Color symbolColor = symbol == 'X' ? Colors.red : Colors.orange;
+
     return InkWell(
       onTap: () => makeMove(row, col),
       child: Container(
         width: 80,
         height: 80,
         decoration: BoxDecoration(
+          color:
+              (row + col) % 2 == 0 ? Colors.white : Colors.grey, // Szachownica
           border: Border.all(color: Colors.black),
         ),
         child: Center(
           child: Text(
             symbol,
-            style: const TextStyle(fontSize: 48),
+            style: TextStyle(fontSize: 48, color: symbolColor),
           ),
         ),
       ),
@@ -130,58 +167,32 @@ class TicTacToeScreenState extends State<TicTacToeScreen> {
     );
   }
 
-  Widget buildGameResult() {
-    if (winner == '') {
-      return const Text(
-        'Remis!',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-      );
-    } else if (winner != null) {
-      return Column(
-        children: [
-          const Text(
-            'Zwycięzca:',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            winner!,
-            style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
-    } else {
-      return const SizedBox.shrink();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kółko i krzyżyk'),
+        backgroundColor: Colors.grey,
+        elevation: 0.0,
+        title: const Center(
+          child: Text(
+            'KÓŁKO I KRZYŻYK',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               'Tura gracza: ${isPlayer1Turn ? 'X' : 'O'}',
               style: const TextStyle(fontSize: 24),
             ),
             const SizedBox(height: 16),
-            buildGameBoard(),
-            const SizedBox(height: 16),
-            if (gameEnded) buildGameResult(),
-            if (gameEnded)
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(
-                      context, '/game'); // Zaczynamy nową grę
-                  startNewGame(); // Resetujemy stan gry
-                },
-                child: const Text('Nowa gra'),
+            Expanded(
+              child: SingleChildScrollView(
+                child: buildGameBoard(),
               ),
+            ),
           ],
         ),
       ),
