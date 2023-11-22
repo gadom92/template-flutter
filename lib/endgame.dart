@@ -47,7 +47,7 @@ class EndGameScreen extends StatelessWidget {
                 ],
               ),
             const SizedBox(height: 16),
-            ElevatedButton(
+            ElevatedButton(style: ElevatedButton.styleFrom(primary: Colors.orange),
               onPressed: () {
                 Navigator.pushReplacementNamed(context, '/game');
               },

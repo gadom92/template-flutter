@@ -12,6 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Kółko i krzyżyk',
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.grey,
